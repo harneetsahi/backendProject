@@ -56,7 +56,7 @@
 DB_NAME = 'projectname'
 ```
 
-### Back to project
+### Database Setup
 
 > **Important**: always use try catch to code database because there can be unexpected errors and we need to catch them. And use async await promises. It takes time to connect with database, no matter how fast, so always make sure to wrap your code in try catch and use promises.
 
@@ -74,3 +74,45 @@ DB_NAME = 'projectname'
 8. Import the function in index.js in the src folder. And import "dotenv/config" at the top to make env variables available. And call the db function.
 
 9. Run the script here to see the result. If errors come up, pay attention to the error message to resolve.
+
+### Application setup in app.js
+
+1. import express. Call and store in a variable called app. And export it.
+2. Going into index.js now, call a then and catch method on connectDB function.
+3. In then method, call an 'on' and 'listen' method on app using process.env.port. This will start the server and application should start listening using the database we created.
+
+---
+
+#### Back to app.js
+
+4. npm install and import cors and cookie-parser in app.js
+5. Now to configure cors, call app.use with cors({}) inside. Refer to the documentation for more understanding.
+6. you can allow origin inside the cors method. (save cors origin variable in env file and reference here) and credentials set to true.
+
+---
+
+7. Now to configure express, call app.use with express.json(). It parses incoming requests with json payload.
+8. To accept incoming requests from url, we need app.use with express.urlencoded(). you can pass in an object with options like {extended: true, limit: '16kb'}. Depends on proejct needs.
+9. To serve static assets from the public directory of your project. call app.use(express.static('public')).
+
+---
+
+10. for cookies, call app.use(cookieParser()).
+
+---
+
+### Utils
+
+1. Since we will be using async function multiple times, it's better to create a utility for it so we can use it as a wrapper whenever we need it.
+2. create asyncHandler.js file in utils that access a function and returns a function.
+3. Pass in req,res,next as params in the function. Execute the function in the try block. In the catch block, get the error code and respond with a json error message.
+4. This same code above can be written as a promise instead of using try catch. We will use this format for this project, but both are correct.
+
+---
+
+5. Now create apiHandler.js in utils and customize the nodejs Error class.
+6. Now create apiResponse.js in utils and create a class.
+
+---
+
+### Handling middlewares
