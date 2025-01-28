@@ -2,6 +2,19 @@
 
 (using javascript)
 
+### Libraries used:
+
+1. nodemon
+2. prettier
+3. mongoose
+4. express
+5. dotenv
+6. cors
+7. cookie-parser
+8. bcryptjs
+9. jsonwebtoken
+10. mongoose-aggregate-paginate-v2
+
 ### Basic structure of your files
 
 1. npm init. git init.
@@ -115,4 +128,49 @@ DB_NAME = 'projectname'
 
 ---
 
-### Handling middlewares
+### Handling models
+
+1. create user.models.js and video.models.js
+2. import mongoose and schema and create userSchema and videoSchema with all values laid out in eraser file. For images, we will use cloudinary.
+3. install mongoose-aggregate-paginate-v2 for aggregation queries and import it in the video model file.
+4. refer to mongoose documentation for information on middleware. There are plugins you can create.
+5. We will use a plugin on videoSchema.
+
+---
+
+6. install bcryptjs to hash passwords.
+7. install jsonwebtoken for authentication.
+8. import jwt and bcrypt in user model file.
+
+---
+
+9. now we need hooks from mongoose (middleware) to make use of encryption.
+10. use pre() method with 'save' on userSchema that basically runs encryption just before data is saved. This method also gets a call back function but don't use arrow function because we need access to 'this' reference.
+11. This process can take time so we will use async. We also make use of 'next' here and pass it on after.
+12. Use bcrypt.hash method to encrypt password.
+13. Now since it's set on pre() method, it will keep running it every time user saves something even if they just changed their image. So we will need to tell it to only run it when password is being modified.
+14. So we use a condition isModified('password') to check if password is modified. If not, return next() immediately.
+
+---
+
+15. Now when user logs in, we need to make sure they are entering the correct password. To verify that, we will create a method using mongoose that lets us compare the password user enters with the encrypted password we saved earlier.
+
+16. I created a method 'isPasswordCorrect' on userSchema, which is an async function. It takes password as a param. It is plaintext password user enters when trying to log in. Then I used bcrypt.compare method, which takes password, and this.password (encrypted password).
+
+---
+
+17. Moving to jwt, using SHA256 key or any other key generate a unique key.
+18. create an env variable access_token_secret and save the key in the variable. Create another variable refresh_token_secret and save another key.
+19. Create another env variable for access_token_expiry with 1d or 2d (days).
+20. Another variable refresh_token_expiry = 10d. Refresh token expiry is usually longer than access token.
+21. Access token will not be saved in database for security. We will only save refresh token in db.
+
+---
+
+22. on userSchema, we will create two new mothods to generate access token, and to generate refresh token.
+
+23. inside generateAccessToken method, we will call sign method on jwt that takes {payload (id, email, username, fullname)}, process.env.ACCESS_TOKEN_SECRET, {expiry}.
+
+24. same code is called inside generaterefreshtoken except that it needs just an id as payload.
+
+25.
