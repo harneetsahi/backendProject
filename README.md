@@ -14,6 +14,14 @@
 8. bcryptjs
 9. jsonwebtoken
 10. mongoose-aggregate-paginate-v2
+11. multer
+12. cloudinary
+
+### External services used:
+
+1. MongoDB
+2. Cloudinary
+3.
 
 ### Basic structure of your files
 
@@ -171,6 +179,18 @@ DB_NAME = 'projectname'
 
 23. inside generateAccessToken method, we will call sign method on jwt that takes {payload (id, email, username, fullname)}, process.env.ACCESS_TOKEN_SECRET, {expiry}.
 
-24. same code is called inside generaterefreshtoken except that it needs just an id as payload.
+24. same code is called inside generateRefreshToken except that it needs just an id as payload and replace access token with refresh token.
 
-25.
+---
+
+### File handling
+
+25. npm i cloudinary, npm i multer
+26. We will use multer to take the file from the user and temporarily store it on our local server. Afterwards, we will use cloudinary to grab the file from local storage and host on their server.
+27. create a new file in utils for cloudinary.
+28. Refer to documentation on your cloudinary account for code.
+29. We will make use of file system of nodejs to get file path. So import fs from 'fs'.
+30. Configure cloudinary amd store secret variables in your env file.
+31. create an uploader function and wrap it in try catch block for error handling. If error occurs, we want to remove the file from local storage so make use of fs.unlinkSync.
+
+---
