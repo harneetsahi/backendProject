@@ -21,7 +21,7 @@
 
 1. MongoDB
 2. Cloudinary
-3.
+3. Postman
 
 ### Basic structure of your files
 
@@ -194,3 +194,38 @@ DB_NAME = 'projectname'
 31. create an uploader function and wrap it in try catch block for error handling. If error occurs, we want to remove the file from local storage so make use of fs.unlinkSync.
 
 ---
+
+### Middlware using multer
+
+32. We will inject multer wherever we need file upload capabilities.
+33. To configure this middleware, create a multer file in the middlewares folder, and import multer.
+34. Use the disk storage function to configure it. We specify destination and filename here, both of which define a function in their value.
+35. This function will give us the localFilePath that we use in file handling for cloudinary.
+
+---
+
+### Router and Controller
+
+1. Move into the controllers folder and create a file for user.controller.js
+2. We will import the asyncHandler we created in utils to handle async functions.
+3. create a method to registerUser. It uses asyncHandler as a wrapper for another async method. The inside async method sends an HTTP response back to the client with status code 200, and a json message 'ok', signaling that request was processed successfully.
+4. In short, when the client hits this route, it sends a 200 ok response with the message 'ok'/
+
+---
+
+5. Now to create routes for users, we move into the routes folder and create a file.
+6. import Router from express.
+7. create a router object. We will use it to define routes on.
+8. since we have separated routes and app file, we have to use a middleware to successully use the routes in the app.js file.
+9. first import userRouter in app.js and configure the router by using app.use('/users', userRouter).
+10. what this does is: whenever someone types /users, the control is automatically shifted to userRouter, which will go in user.routes.js file and find the route for the user.
+11. now going back to user.routes.js, set a route on userRouter('/register').post(registerUser).
+12. this method in turn moves the control to registerUser (we created that method in user.controller.js)
+
+    > in short, when someone clicks on 'localhost:8000/users', userRouter will check the routes user can be directed to. One of those routes is 'register'. If a user clicks on 'localhost:8000/users/register', the control moves to user.controller.js, which has a method for registering a user.
+
+13. now for standard practices, we will write 'api/v1/users' instead of 'users' in step 9.
+
+14. you can check the api response in postman to confirm everything is correct or just check in your terminal by running npm run dev
+
+15.
