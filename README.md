@@ -255,14 +255,47 @@ DB_NAME = 'projectname'
 
 6. Now for validation, we move back to user.controller.js. and write a condition to check if all user details are filled.
 7. If any of the fields are empty, use ApiError to throw an error. We created this class in utils.
+
+---
+
 8. Now to check if a user already exists, import User from user.models.js.
 9. This User variable we created using mongoose can connect with database and has a method available findOne(username or email) that checks in the database if a user with that username or email exists.
+
+---
+
 10. Now we need to get local path of images. We use req.files method of multer to access the file path of the first uploaded file in the avatar field.
 11. Next step is to upload on cloudinary.
 12. We will use uploadOnCloudinary method we created in utils. Import here and upload avatar and coverImage.
 13. Check if there is no avatar, then throw an error.
+
+---
+
 14. Next step is to create a user object and create entery in db
 15. Now in our code, only User is talking to database so we will use it to create user object using '.create' on it with putting all user details in an object. Make sure to put await because connecting with database can take time.
 16. To check if user was successfully created, we can use the method findById() and pass in user.id. At the same time, we can use select() to remove 'password' and 'refreshToken' from the object by using minus - sign before both properties.
 17. Handle error if no user has been created.
 18. finally return the response using ApiResponse.
+
+---
+
+19. Now is the time for testing again in postman to see if there are any errors. If everything is correct, unlink the file in cloudinary.js using fs.unlinkSync() to make sure file is removed synchronously from the file system.
+20. While testing, when I did not upload coverImage, I was running into an error 'Cannot read properties of undefined (reading '0')'
+21. This happens because of optional chaining where req.files?.coverImage[0]?.path is expecting a coverImage. If it's undefined that there is nothing for us to extract.
+22. To resolve this, first I set coverImageLocalPath to empty. Then I created an if statement that checks if req.files exists and if it does, does it contain an array for coverImage and if it does, is its length more than 0. If yes, then it sets the coverImageLocalPath. Otherwise it will return an empty coverImage field.
+23. If any other errors come up, first check if you are using 'await' for methods take can take time to produce an output.
+
+---
+
+### Configure Postman
+
+1. In postman, we want to streamline testing. So copy your url we were testing on.
+2. create a new collection, give it a proper name. 3. add a new request here, give it a name (eg. register) and enter your url. Make sure to select Post from the dropdown. By default it stays at Get. Save it.
+3. I rearranged the folders by clicking on the register request I just created and clicking on save as > new folder 'users'. I moved the register request in users. And save. Delete the older register request if duplicated.
+4. Now copy the front of your url 'http://localhost:800/api/v1'. Click on environments, and create a new environment. I named it the same as my collection.
+5. create a variable called server and enter the url we copied in initial value. Current value should be the same. Save it.
+6. In top right, you have to option to choose an environment for this variable. Share it with your collection. It should now be available in your collection.
+7. Go in register request and replace the front part of this url with {{server}}. It should now be {{server}}/users/register.
+8. Now in the body > form-data > enter the key value pairs of user details. And save.
+9. Now we have it saved here and we can use it test anytime. (make sure to save at every step)
+
+---

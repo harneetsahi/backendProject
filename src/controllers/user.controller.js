@@ -3,12 +3,10 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const registerUser = asyncHandler(async (req, res) => {
-  res.status(200).json({
-    message: "ok",
-  });
-
   //// Logic Building
   // - get user details from frontend
   // - validate details to make it's not empty and is in correct format
@@ -22,7 +20,8 @@ const registerUser = asyncHandler(async (req, res) => {
   // - return response or error if no creation
 
   const { fullname, username, email, password } = req.body;
-  console.log("email: ", email);
+
+  // console.log("study this: req.body ", req.body);
 
   if (
     ///.some method is checking if any of the fields after trimming the negative space are empty. If it is empty, it will return true and throw an error. You could also use write different if else statements instead.
@@ -32,7 +31,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existingUser = User.findOne({
+  const existingUser = await User.findOne({
     /// this syntax looks for both email and username in db
     $or: [{ username }, { email }],
   });
@@ -41,13 +40,21 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "Username or Email already exists");
   }
 
+  // console.log("study this: req.files ", req.files);
+
   //// multer provides req.files method like express provides req.body method
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  // we write [0] because images have a lot of properties like jpeg, png, size but we need the first property which has an object called path.
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-  // console.log(avatarLocalPath);
+  let coverImageLocalPath;
 
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar is required");
