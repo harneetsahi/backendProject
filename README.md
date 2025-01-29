@@ -228,4 +228,41 @@ DB_NAME = 'projectname'
 
 14. you can check the api response in postman to confirm everything is correct or just check in your terminal by running npm run dev
 
-15.
+---
+
+### Logic Building
+
+- get user details from frontend
+- validate details to make it's not empty and is in correct format
+- check if user already exists (via username or email)
+- check for images and avatar
+- upload them to cloudinary
+- create user object to send to mongoDB
+- create entry in DB. It sends us a response
+- remove password and refresh token field from response
+- check if user is successfully created
+- return response or error if no creation
+
+---
+
+1. in user.controller.js registerUser method, grab user details from req.body and destructure to save in a variable.
+2. you can test here in postman if everything is working as expected by console loggin email and going in postman > body > raw > json and write a key value for email. It should send a result in your node terminal in vscode.
+3. for handling file uploads, we want to use the upload middleware we created. So first import it in user.routes.js, and then call it just before the method registerUser.
+4. upload middleware gives you a few options (single for a single file, an array for multiple files in the same field). We will use '.field' option because we need multiple objects for different files.
+5. '.field' accepts an array with multiple objects. We need two objects. One for avatar, and one for coverImage.
+
+---
+
+6. Now for validation, we move back to user.controller.js. and write a condition to check if all user details are filled.
+7. If any of the fields are empty, use ApiError to throw an error. We created this class in utils.
+8. Now to check if a user already exists, import User from user.models.js.
+9. This User variable we created using mongoose can connect with database and has a method available findOne(username or email) that checks in the database if a user with that username or email exists.
+10. Now we need to get local path of images. We use req.files method of multer to access the file path of the first uploaded file in the avatar field.
+11. Next step is to upload on cloudinary.
+12. We will use uploadOnCloudinary method we created in utils. Import here and upload avatar and coverImage.
+13. Check if there is no avatar, then throw an error.
+14. Next step is to create a user object and create entery in db
+15. Now in our code, only User is talking to database so we will use it to create user object using '.create' on it with putting all user details in an object. Make sure to put await because connecting with database can take time.
+16. To check if user was successfully created, we can use the method findById() and pass in user.id. At the same time, we can use select() to remove 'password' and 'refreshToken' from the object by using minus - sign before both properties.
+17. Handle error if no user has been created.
+18. finally return the response using ApiResponse.
