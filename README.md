@@ -272,7 +272,7 @@ DB_NAME = 'projectname'
 
 14. Next step is to create a user object and create entery in db
 15. Now in our code, only User is talking to database so we will use it to create user object using '.create' on it with putting all user details in an object. Make sure to put await because connecting with database can take time.
-16. To check if user was successfully created, we can use the method findById() and pass in user.id. At the same time, we can use select() to remove 'password' and 'refreshToken' from the object by using minus - sign before both properties.
+16. To check if user was successfully created, we can use the method findById() and pass in user.\_id. At the same time, we can use select() to remove 'password' and 'refreshToken' from the object by using minus - sign before both properties.
 17. Handle error if no user has been created.
 18. finally return the response using ApiResponse.
 
@@ -291,7 +291,7 @@ DB_NAME = 'projectname'
 1. In postman, we want to streamline testing. So copy your url we were testing on.
 2. create a new collection, give it a proper name. 3. add a new request here, give it a name (eg. register) and enter your url. Make sure to select Post from the dropdown. By default it stays at Get. Save it.
 3. I rearranged the folders by clicking on the register request I just created and clicking on save as > new folder 'users'. I moved the register request in users. And save. Delete the older register request if duplicated.
-4. Now copy the front of your url 'http://localhost:800/api/v1'. Click on environments, and create a new environment. I named it the same as my collection.
+4. Now copy the front of your url 'http://localhost:8000/api/v1'. Click on environments, and create a new environment. I named it the same as my collection.
 5. create a variable called server and enter the url we copied in initial value. Current value should be the same. Save it.
 6. In top right, you have to option to choose an environment for this variable. Share it with your collection. It should now be available in your collection.
 7. Go in register request and replace the front part of this url with {{server}}. It should now be {{server}}/users/register.
@@ -299,3 +299,96 @@ DB_NAME = 'projectname'
 9. Now we have it saved here and we can use it test anytime. (make sure to save at every step)
 
 ---
+
+### Access and Refresh Token
+
+> **Access Token:** When you first log in, the server gives you an access token and a refresh token. You use the access token to authenticate API calls.
+> **Refresh Token:** When the access token expires, you use the refresh token to obtain a new access token. This allows users to remain logged in without needing to manually reauthenticate.
+
+### logic for login
+
+- get data from req.body
+- validate username / email field
+- find user in db
+- if not, throw error
+- if found, check password
+- if pass is wrong, throw error
+- if pass is correct, generate access and refresh token
+- send tokens to user by cookies
+
+1. create loginUser method in user.controller.js using asyncHandler with an async function inside.
+2. get data from req.body
+3. if username or email is not entered, throw error
+4. find user in database using findOne. Check for both email or username.
+5. if user not found, throw error.
+6. if found, check if password is correct by using isPasswordCorrect method we created earlier on userSchema. We have access to it through req.body. ** note: the methods given by mongoose are called on "User" with the U capital. The methods we created are used on the instance of User, which in this case is 'userExists'.**
+7. if password is wrong, throw error.
+8. If correct, generate access and refresh tokens.
+9. we'll create a separate method all together for tokens.
+
+---
+
+10. create an async method generateAccessAndRefreshTokens that takes userId.
+11. create a try catch block inside and throw error if any.
+12. in try block, find user by id and store in a variable.
+13. call generateRefreshToken and generateAccessToken methods on user and hold in a variable. We created these methods in userSchema so they should be available on User.
+14. now since we store refresh token in database so we can give it to the user, we now have to store it in db.
+15. in userSchema we have a property for refreshToken so using user.refreshToken = refreshToken, we can store this value.
+16. now call user.save({validateBeforeSave: false}).
+17. when you call mangoose's save method, it checks the data against any validation rules that are defined in the schema. So to disable that process, we can pass in {validateBeforeSave: false} inside save. It is done only when we know data is already validated. In our case, we have alreaedy validated the user email and password.
+18. return both tokens
+19. call generateAccessAndRefreshTokens method in loginUser method and pass in userExists.\_id (we get id from User) and put await before it and store it. Destructure both tokens.
+20. Now we can either update our userExists so it has access to refreshToken or we can send another db request here to fetch information we need from it.
+21. To send the db request, call findById on User using userExists.\_id and put a select method on it to remove password and refreshToken from the result and save it in a variable loggedInUser.
+22. We now have all the fields except password and refreshToken and we are ready to send it to the user using cookies.
+
+---
+
+#### Send cookies
+
+1. We have to design some options in order to send cookies. It is an object which has an option httpOnly and secure. Set them both to true so our cookies cannot be modified in frontend. It can only be modified on the server side now.
+2. Now we have to return res.status(200) and attach cookie() to it. You can set as many cookies as you want and pass in the values you want to send. After cookies, attach a json method as well to send ApiResponse with status code, a message, and an object with loggedInUser and tokens.
+3.
+
+### Logout user
+
+> logic: we should remove cookies, and reset tokens in order to log out the user.
+> We need to first find the user. But how do we find user? We could try findById on User but we actually don't have any values to go off of. In the login method, we were able to use findById because we could ask the user their email and username and we used it to locate in our db. Now we can't ask at this stage. So we make use of a middleware.
+
+1. create and export a method in user.controller.js to logout user using asyncHandler with async function inside. We will come back to it later.
+2. earlier in app.js we configured cookieParser on app.use. This should allow us to use cookies on not just response but also on request.
+3. create auth.middleware.js in middlewares folder.
+4. create a method verifyJWT using asyncHandler with another asyn function inside. Since it's a middleware, we will need req, res, and next. Create a try catch block.
+5. grab cookies from req and get accessToken (we added cookies in the login method). Make it optional chaining in case there are no cookies.
+6. In mobile apps, we might not have cookies but there may be a custom header. So using logical OR operator, check if in req.header we have a key "Authorization" and if so, replace its 'Bearer ' (the word bearer and space after it) value with an empty string to get the token.
+7. if no token found, throw error.
+8. use jwt to verify the token.
+9. use findById on User now and remove the values we do not want in the result.
+10. Throw error if nothing was found.
+11. assign req.user the new object we created 'user' and call next() at the end.
+
+---
+
+12. Go in the routes, import verifyJWT and create a new route for login. use post method with loginUser function.
+
+13. create a new route for logout. use post method with logoutUser function.
+
+14. to use the middlware, insert verifyJWT in the logout route as the first param in the post method (before logoutUser).
+
+15. this will run the verifiyJWT before it logs out the user. this is also why we use 'next()' at the end of the middleware to signal the route to run the middlware and then move on to the next operation.
+
+16. when this operation runs, it brings us back to user.controller.js to the logoutUser method. Now here we have access to req.user.
+
+17. on User call a new method findByIdAndUpdate and pass in
+
+    - the id from req.user.\_id
+    - an object that has an operator of mongodb called $set to set refreshToken to undefined
+    - another object that sets new: true. It returns a new updated value in response
+
+18. create options again with httpOnly and secure set to true.
+
+19. clear cookies from options and return the response with status code, clearCookies, and json response.
+
+20. side note: in function when we pass in (req,res, next), if we do not use res, we can pass it in as \_ instead of res. (you'll find it in production grade code)
+
+> we separated the verifyJWT functionality so we can reuse it in other functions like when a user posts something or when they like something, we would need to know if they are authenticated.
